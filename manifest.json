@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "AppsBookmarker",
+  "version": "1.0",
+  "description": "The Bookmark ease to add the website urls",
+  "permissions": ["activeTab", "storage"],
+
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
