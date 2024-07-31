@@ -1,19 +1,52 @@
 const container = document.querySelector(".container");
 const input = document.querySelector(".add-input");
-function createElements(name, url, icon) {
+
+function deleteBookmark(id) {
+  chrome.storage.local.remove(id, () => console.log(`remove ${id}`));
+  loadSites();
+}
+
+function createDeleteBtn(id) {
+  const delete_btn = document.createElement("button");
+  delete_btn.classList.add(".delete-btn");
+  delete_btn.addEventListener("click", () => deleteBookmark(id));
+  return delete_btn;
+}
+
+function createImage(src) {
+  const image = document.createElement("img");
+  image.src = src;
+  image.classList.add("image");
+  return image;
+}
+
+function createTitle(desc) {
+  const title = document.createElement("p");
+  title.innerText = desc;
+  return title;
+}
+
+function createAnchor(id, url) {
   const link = document.createElement("a");
   link.target = "_blank";
   link.href = url;
-  link.dataset.name = name;
   link.classList.add("link");
-
-  const image = document.createElement("img");
-  image.src = icon;
-  image.classList.add("image");
-
-  link.appendChild(image);
-
   return link;
+}
+
+function createElements(id, url, icon) {
+  const link = createAnchor(id, url);
+  const image = createImage(icon);
+  link.appendChild(image);
+  const title = createTitle(id);
+  const deleteBtn = createDeleteBtn(id);
+
+  const li = document.createElement("li");
+  li.appendChild(link);
+  li.appendChild(title);
+  li.appendChild(deleteBtn);
+
+  return li;
 }
 
 function saveThisSite(name) {
@@ -39,12 +72,14 @@ function loadSites() {
   });
 }
 
-document.querySelector(".add-btn").addEventListener("click", () => {
-  const value = input.value;
-  if (!value) return;
-  saveThisSite(value);
-  input.value = "";
+input.focus();
+input.addEventListener("keypress", (event) => {
+  if (event.key == "Enter") {
+    const value = input.value;
+    if (!value) return;
+    saveThisSite(value);
+    input.value = "";
+  }
 });
 
-// chrome.storage.local.clear();
 loadSites();
