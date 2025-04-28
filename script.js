@@ -1,6 +1,8 @@
 const container = document.querySelector(".container");
 const input = document.querySelector(".add-input");
 
+let Items = [];
+
 function deleteBookmark(id) {
   chrome.storage.local.remove(id, () => console.log(`remove ${id}`));
   loadSites();
@@ -27,24 +29,32 @@ function createTitle(desc) {
 }
 
 function createAnchor(id, url) {
-  const link = document.createElement("a");
-  link.target = "_blank";
-  link.href = url;
-  link.classList.add("link");
-  return link;
+  const span = document.createElement("span");
+  return span;
 }
 
-function createElements(id, url, icon) {
-  const link = createAnchor(id, url);
+function createElements(id,name, url, icon) {
+  const span = createAnchor(id, url);
   const image = createImage(icon);
-  link.appendChild(image);
-  const title = createTitle(id);
-  const deleteBtn = createDeleteBtn(id);
+  span.appendChild(image);
+  const title = createTitle(name);
 
   const li = document.createElement("li");
-  li.appendChild(link);
+  li.addEventListener("contextmenu", (e) => {
+    e.preventDefault()
+    console.log(`id = ${id}`);
+    Items = Items.filter((item,idx)=> idx != id)
+    listItems()
+  });
+
+  li.addEventListener("click", () => {
+    // If you want to open in new tab instead of current
+    chrome.tabs.create({ url: url });
+  });
+
+
+  li.appendChild(span);
   li.appendChild(title);
-  li.appendChild(deleteBtn);
 
   return li;
 }
@@ -52,24 +62,32 @@ function createElements(id, url, icon) {
 function saveThisSite(name) {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const currentTab = tabs[0];
-    console.log(currentTab);
     const favicoUrl = currentTab.favIconUrl;
     const siteUrl = currentTab.url;
 
-    chrome.storage.local.set({ [name]: [siteUrl, favicoUrl] }, () =>
-      loadSites(),
-    );
+    Items.push({
+      title: name,
+      url: siteUrl,
+      icon: favicoUrl,
+    });
+
+    chrome.storage.local.set({ bookmarks: Items }, () => listItems());
   });
 }
 
 function loadSites() {
-  container.innerHTML = "";
-  chrome.storage.local.get(null, (items) => {
-    for (const [key, value] of Object.entries(items)) {
-      const element = createElements(key, value[0], value[1]);
-      container.appendChild(element);
-    }
+  chrome.storage.local.get(["bookmarks"], (items) => {
+    Items = items.bookmarks;
+    listItems();
   });
+}
+
+function listItems() {
+  container.innerHTML = "";
+  for (let i = 0; i < Items.length; i++) {
+    const element = createElements(i,Items[i].title, Items[i].url, Items[i].icon);
+    container.appendChild(element);
+  }
 }
 
 input.focus();
